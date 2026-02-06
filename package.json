@@ -1,0 +1,32 @@
+{
+  "name": "ai-agent-auth",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "OAuth for Robots - Authentication protocol for AI agents",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/ai-agent-auth.git"
+  },
+  "scripts": {
+    "build": "pnpm --recursive --stream build",
+    "test": "vitest",
+    "test:watch": "vitest --watch",
+    "test:coverage": "vitest run --coverage",
+    "lint": "eslint . && prettier --check .",
+    "lint:fix": "eslint . --fix && prettier --write ."
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "@vitest/coverage-v8": "^1.2.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.2.4",
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

@@ -1,0 +1,38 @@
+{
+  "name": "@ai-agent-auth/client",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Client SDK for ai-agent-auth - Agent-side authentication",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --external @ai-agent-auth/core",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "@ai-agent-auth/core": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.1",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "authentication",
+    "did",
+    "oauth"
+  ]
+}
