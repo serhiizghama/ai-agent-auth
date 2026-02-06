@@ -7,14 +7,14 @@
 import * as ed from '@noble/ed25519'
 import { sha256 } from '@noble/hashes/sha256'
 import { sha512 } from '@noble/hashes/sha512'
-import { randomBytes as cryptoRandomBytes } from 'node:crypto'
 import type { KeyPair } from './types'
 import { encodeBase58btc, decodeBase58btc } from './base58'
+import { randomBytes } from './random'
 
 // Set up SHA-512 for @noble/ed25519
 // This is required by the library for security reasons
 ed.etc.sha512Sync = (...m) => sha512(ed.etc.concatBytes(...m))
-ed.etc.sha512Async = (...m) => Promise.resolve(ed.etc.sha512Sync(...m))
+ed.etc.sha512Async = (...m) => Promise.resolve(ed.etc.sha512Sync!(...m))
 
 /**
  * Generate a new Ed25519 key pair
@@ -24,7 +24,7 @@ ed.etc.sha512Async = (...m) => Promise.resolve(ed.etc.sha512Sync(...m))
  * @returns KeyPair with privateKey and publicKey (both 32 bytes)
  */
 export function generateKeyPair(): KeyPair {
-  const privateKey = cryptoRandomBytes(32)
+  const privateKey = randomBytes(32)
   const publicKey = ed.getPublicKey(privateKey)
 
   return {
@@ -163,8 +163,8 @@ export async function verifyChallengeSignature(
  * @returns 64-char hex string (256 bits of randomness)
  */
 export function generateChallenge(): string {
-  const bytes = cryptoRandomBytes(32) // 256 bits
-  return Buffer.from(bytes).toString('hex')
+  const bytes = randomBytes(32) // 256 bits
+  return bytesToHex(bytes)
 }
 
 /**

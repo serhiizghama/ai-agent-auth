@@ -189,21 +189,49 @@ export async function resolveDidWeb(
     const decoded = decodeURIComponent(domain)
 
     // Step 4: Construct URL
-    const url = `https://${decoded}/.well-known/did.json`
+    let url = `https://${decoded}/.well-known/did.json`
 
-    // Step 5: Fetch with safety limits
-    const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), timeoutMs)
-
+    // Step 5: Fetch with safety limits and redirect tracking
+    // SPEC §5.2.3: "Do NOT follow more than 3 redirects"
+    let redirectCount = 0
     let response: Response
-    try {
-      response = await fetchFn(url, {
-        signal: controller.signal,
-        redirect: 'follow',
-        headers: { Accept: 'application/json' },
-      })
-    } finally {
-      clearTimeout(timer)
+
+    while (true) {
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), timeoutMs)
+
+      try {
+        response = await fetchFn(url, {
+          signal: controller.signal,
+          redirect: 'manual', // Handle redirects manually
+          headers: { Accept: 'application/json' },
+        })
+      } finally {
+        clearTimeout(timer)
+      }
+
+      // Handle redirects manually (3xx status codes)
+      if (response.status >= 300 && response.status < 400) {
+        const location = response.headers.get('location')
+
+        if (!location) {
+          throw new Error(`Redirect response (${response.status}) without Location header`)
+        }
+
+        if (redirectCount >= maxRedirects) {
+          throw new Error(
+            `Too many redirects (>${maxRedirects}). Redirect loops prevented per SPEC §5.2.3`
+          )
+        }
+
+        redirectCount++
+        // Handle relative and absolute URLs
+        url = new URL(location, url).toString()
+        continue
+      }
+
+      // Non-redirect response - break the loop
+      break
     }
 
     if (!response.ok) {

@@ -194,4 +194,120 @@ describe('did:web Resolution', () => {
       )
     }
   })
+
+  it('should handle redirects up to maxRedirects limit', async () => {
+    let redirectCount = 0
+
+    // Mock fetch that redirects 2 times, then returns success
+    const mockFetch = async (url: string) => {
+      if (redirectCount < 2) {
+        redirectCount++
+        return {
+          status: 302,
+          headers: {
+            get: (name: string) =>
+              name === 'location' ? 'https://redirect.example.com/.well-known/did.json' : null,
+          },
+        } as Response
+      }
+
+      // Final response (after 2 redirects)
+      const didDoc = {
+        id: 'did:web:example.com',
+        verificationMethod: [
+          {
+            id: 'did:web:example.com#key-1',
+            type: 'Ed25519VerificationKey2020',
+            controller: 'did:web:example.com',
+            publicKeyMultibase: 'z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK',
+          },
+        ],
+      }
+
+      const encoder = new TextEncoder()
+      const bodyBytes = encoder.encode(JSON.stringify(didDoc))
+
+      let readCount = 0
+      return {
+        ok: true,
+        status: 200,
+        body: {
+          getReader: () => ({
+            read: async () => {
+              if (readCount === 0) {
+                readCount++
+                return { done: false, value: bodyBytes }
+              }
+              return { done: true, value: undefined }
+            },
+            releaseLock: () => {},
+          }),
+        },
+      } as unknown as Response
+    }
+
+    // Should succeed with 2 redirects (under limit of 3)
+    await expect(
+      resolveDID('did:web:example.com', undefined, {
+        fetchFn: mockFetch as typeof fetch,
+        maxRedirects: 3,
+      })
+    ).resolves.toBeDefined()
+
+    expect(redirectCount).toBe(2)
+  })
+
+  it('should reject when redirects exceed maxRedirects limit', async () => {
+    // Mock fetch that always redirects (infinite loop)
+    const mockFetch = async () => {
+      return {
+        status: 302,
+        headers: {
+          get: (name: string) =>
+            name === 'location' ? 'https://redirect.example.com/.well-known/did.json' : null,
+        },
+      } as Response
+    }
+
+    // Should fail when redirects exceed limit
+    try {
+      await resolveDID('did:web:example.com', undefined, {
+        fetchFn: mockFetch as typeof fetch,
+        maxRedirects: 3,
+        timeoutMs: 5000, // Increase timeout to ensure redirect limit is hit first
+      })
+      expect.fail('Should have thrown')
+    } catch (error) {
+      expect(error).toBeInstanceOf(AuthError)
+      expect((error as AuthError).code).toBe(
+        AuthErrorCode.AUTH_DID_RESOLUTION_FAILED
+      )
+      expect((error as AuthError).message).toContain('Too many redirects')
+    }
+  })
+
+  it('should reject redirect without Location header', async () => {
+    // Mock fetch that returns redirect without Location header
+    const mockFetch = async () => {
+      return {
+        status: 302,
+        headers: {
+          get: () => null, // No Location header
+        },
+      } as Response
+    }
+
+    try {
+      await resolveDID('did:web:example.com', undefined, {
+        fetchFn: mockFetch as typeof fetch,
+      })
+      expect.fail('Should have thrown')
+    } catch (error) {
+      expect(error).toBeInstanceOf(AuthError)
+      expect((error as AuthError).code).toBe(
+        AuthErrorCode.AUTH_DID_RESOLUTION_FAILED
+      )
+      expect((error as AuthError).message).toContain('without Location header')
+    }
+  })
 })

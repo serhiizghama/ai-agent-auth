@@ -75,6 +75,8 @@ export {
   bytesToHex,
 } from './crypto'
 
+export { randomBytes } from './random'
+
 // ─── Base58 ─────────────────────────────────────────────────────────────
 export { encodeBase58btc, decodeBase58btc, isValidBase58btc } from './base58'
 

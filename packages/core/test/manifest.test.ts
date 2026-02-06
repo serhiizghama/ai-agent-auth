@@ -375,7 +375,9 @@ describe('createVerificationMethod', () => {
     const did = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK'
     const vm = createVerificationMethod(did)
 
-    expect(vm).toBe(`${did}#${did}`)
+    // Should use simple fragment identifier, not duplicate the full DID
+    // Format: did:key:z...#key-1 (consistent with did:web)
+    expect(vm).toBe(`${did}#key-1`)
   })
 
   it('should create verification method for did:web', () => {
@@ -390,6 +392,13 @@ describe('createVerificationMethod', () => {
     const vm = createVerificationMethod(did, 'signing-key')
 
     expect(vm).toBe(`${did}#signing-key`)
+  })
+
+  it('should accept custom key ID for did:key', () => {
+    const did = 'did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK'
+    const vm = createVerificationMethod(did, 'auth-key')
+
+    expect(vm).toBe(`${did}#auth-key`)
   })
 })
 

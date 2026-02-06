@@ -212,8 +212,9 @@ export function createVerificationMethod(
   keyId: string = 'key-1'
 ): string {
   if (did.startsWith('did:key:')) {
-    // For did:key, verification method is self-referencing
-    return `${did}#${did}`
+    // For did:key, use simple fragment identifier (consistent with did:web)
+    // Per W3C DID spec, fragment should not contain the full DID
+    return `${did}#${keyId}`
   } else {
     // For did:web, use conventional key-1 fragment
     return `${did}#${keyId}`
