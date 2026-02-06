@@ -17,11 +17,12 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts --external @ai-agent-auth/core",
+    "build": "tsup",
     "test": "vitest"
   },
   "dependencies": {
-    "@ai-agent-auth/core": "workspace:*"
+    "@ai-agent-auth/core": "workspace:*",
+    "@noble/ed25519": "^2.0.0"
   },
   "devDependencies": {
     "tsup": "^8.0.1",

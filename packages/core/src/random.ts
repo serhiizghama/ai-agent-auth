@@ -21,8 +21,7 @@ export function randomBytes(length: number): Uint8Array {
   }
 
   // Use Web Crypto API (available in all modern runtimes)
-  // @ts-expect-error - crypto might not be in global types, but it exists at runtime
-  const cryptoObj = globalThis.crypto || global.crypto
+  const cryptoObj = globalThis.crypto
 
   if (!cryptoObj || !cryptoObj.getRandomValues) {
     throw new Error(
