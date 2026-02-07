@@ -7,6 +7,7 @@ import {
 } from '../src/did'
 import { generateKeyPair } from '../src/crypto'
 import { AuthError, AuthErrorCode } from '../src/errors'
+import { encodeBase58btc } from '../src/base58'
 
 describe('DID Parsing', () => {
   describe('parseDID', () => {
@@ -136,6 +137,34 @@ describe('did:key Encoding/Decoding', () => {
         expect((error as AuthError).code).toBe(
           AuthErrorCode.AUTH_DID_RESOLUTION_FAILED
         )
+      }
+    })
+
+    it('should reject did:key with invalid multicodec prefix (Step 3)', () => {
+      // SPEC §5.2.2 Step 3: Verify first 2 bytes == [0xed, 0x01] (Ed25519 multicodec)
+      // This test ensures that a did:key with an invalid multicodec is rejected
+
+      // Create a did:key with wrong multicodec prefix (0xec01 instead of 0xed01)
+      const fakePublicKey = new Uint8Array(32).fill(0x42)
+      const wrongMulticodec = new Uint8Array([0xec, 0x01]) // Wrong prefix!
+      const payload = new Uint8Array(34)
+      payload.set(wrongMulticodec, 0)
+      payload.set(fakePublicKey, 2)
+
+      // Manually encode to base58btc with 'z' prefix
+      const encoded = encodeBase58btc(payload)
+      const malformedDidKey = `did:key:${encoded}`
+
+      try {
+        didKeyToPublicKey(malformedDidKey)
+        expect.fail('Should have thrown for invalid multicodec prefix')
+      } catch (error) {
+        expect(error).toBeInstanceOf(AuthError)
+        expect((error as AuthError).code).toBe(
+          AuthErrorCode.AUTH_DID_RESOLUTION_FAILED
+        )
+        expect((error as AuthError).message).toContain('Invalid multicodec prefix')
+        expect((error as AuthError).message).toContain('0xec')
       }
     })
   })

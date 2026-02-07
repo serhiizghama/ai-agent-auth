@@ -1,0 +1,461 @@
+openapi: 3.0.3
+info:
+  title: ai-agent-auth API
+  description: >
+    Authentication endpoints for the ai-agent-auth protocol.
+    Implements cryptographic challenge-response authentication
+    for AI agents using DID and Ed25519 signatures.
+  version: 1.0.0
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+
+servers:
+  - url: https://api.example.com
+    description: Example server
+
+paths:
+  /auth/challenge:
+    post:
+      summary: Request an authentication challenge
+      operationId: requestChallenge
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChallengeRequest'
+            example:
+              did: "did:web:agent.example.com"
+      responses:
+        '200':
+          description: Challenge issued successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ChallengeResponse'
+              example:
+                challenge: "a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2"
+                expires_at: "2026-02-06T12:05:00Z"
+        '202':
+          description: DID registration is pending approval
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PendingResponse'
+        '403':
+          description: DID not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                not_found:
+                  value:
+                    error:
+                      code: AUTH_DID_NOT_FOUND
+                      message: "DID is not registered in the access control list."
+                rejected:
+                  value:
+                    error:
+                      code: AUTH_DID_REJECTED
+                      message: "DID registration was rejected."
+                banned:
+                  value:
+                    error:
+                      code: AUTH_DID_BANNED
+                      message: "DID has been banned."
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/verify:
+    post:
+      summary: Verify a signed challenge and obtain a JWT
+      operationId: verifyChallenge
+      tags: [Authentication]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyRequest'
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyResponse'
+              example:
+                token: "eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9..."
+                expires_at: "2026-02-06T22:00:00Z"
+                agent:
+                  did: "did:web:agent.example.com"
+                  name: "ResearchBot-7"
+                  capabilities: ["search", "summarize"]
+        '400':
+          description: Verification failed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              examples:
+                invalid_signature:
+                  value:
+                    error:
+                      code: AUTH_INVALID_SIGNATURE
+                      message: "Challenge signature verification failed."
+                expired_challenge:
+                  value:
+                    error:
+                      code: AUTH_EXPIRED_CHALLENGE
+                      message: "Challenge has expired."
+                already_used:
+                  value:
+                    error:
+                      code: AUTH_CHALLENGE_ALREADY_USED
+                      message: "Challenge has already been used."
+                manifest_invalid:
+                  value:
+                    error:
+                      code: AUTH_INVALID_MANIFEST_SIGNATURE
+                      message: "Manifest signature verification failed."
+                rollback:
+                  value:
+                    error:
+                      code: AUTH_MANIFEST_ROLLBACK
+                      message: "Manifest sequence is older than previously seen."
+        '403':
+          description: DID not authorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/register:
+    post:
+      summary: Register a new agent (optional endpoint)
+      operationId: registerAgent
+      tags: [Registration]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+      responses:
+        '201':
+          description: Registration accepted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+              example:
+                did: "did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK"
+                status: "pending_approval"
+                message: "Your registration is pending admin approval."
+                retry_after: 3600
+        '200':
+          description: DID already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RegisterResponse'
+        '400':
+          description: Invalid manifest
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '409':
+          description: DID previously rejected or banned
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '429':
+          description: Rate limit exceeded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+components:
+  schemas:
+    ChallengeRequest:
+      type: object
+      required: [did]
+      properties:
+        did:
+          type: string
+          pattern: '^did:(key|web):.+$'
+          description: Agent's DID identifier
+          example: "did:web:agent.example.com"
+
+    ChallengeResponse:
+      type: object
+      required: [challenge, expires_at]
+      properties:
+        challenge:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+          description: 256-bit hex-encoded random challenge
+        expires_at:
+          type: string
+          format: date-time
+          description: ISO 8601 expiry timestamp
+
+    VerifyRequest:
+      type: object
+      required: [did, challenge, signature, manifest]
+      properties:
+        did:
+          type: string
+          pattern: '^did:(key|web):.+$'
+        challenge:
+          type: string
+          pattern: '^[0-9a-f]{64}$'
+        signature:
+          type: string
+          pattern: '^z[1-9A-HJ-NP-Za-km-z]+$'
+          description: Base58btc-encoded Ed25519 signature with 'z' prefix
+        manifest:
+          $ref: '#/components/schemas/AgentManifest'
+
+    VerifyResponse:
+      type: object
+      required: [token, expires_at, agent]
+      properties:
+        token:
+          type: string
+          description: JWT session token
+        expires_at:
+          type: string
+          format: date-time
+        agent:
+          type: object
+          required: [did, name, capabilities]
+          properties:
+            did:
+              type: string
+            name:
+              type: string
+            capabilities:
+              type: array
+              items:
+                type: string
+
+    RegisterRequest:
+      type: object
+      required: [manifest]
+      properties:
+        manifest:
+          $ref: '#/components/schemas/AgentManifest'
+        reason:
+          type: string
+          maxLength: 1024
+
+    RegisterResponse:
+      type: object
+      required: [did, status, message]
+      properties:
+        did:
+          type: string
+        status:
+          type: string
+          enum: [pending_approval, approved, rejected, banned]
+        message:
+          type: string
+        retry_after:
+          type: integer
+          description: Seconds to wait before checking status
+
+    PendingResponse:
+      type: object
+      required: [status, message]
+      properties:
+        status:
+          type: string
+          enum: [pending_approval]
+        message:
+          type: string
+        retry_after:
+          type: integer
+
+    AgentManifest:
+      type: object
+      required: [$schema, version, id, sequence, created_at, updated_at,
+                 valid_until, metadata, capabilities, proof]
+      properties:
+        $schema:
+          type: string
+          format: uri
+        version:
+          type: string
+          pattern: '^\d+\.\d+\.\d+'
+        id:
+          type: string
+          pattern: '^did:(key|web):.+$'
+        sequence:
+          type: integer
+          minimum: 1
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        valid_until:
+          type: string
+          format: date-time
+        revocation:
+          $ref: '#/components/schemas/RevocationConfig'
+        metadata:
+          $ref: '#/components/schemas/ManifestMetadata'
+        capabilities:
+          $ref: '#/components/schemas/ManifestCapabilities'
+        proof:
+          $ref: '#/components/schemas/ManifestProof'
+
+    ManifestMetadata:
+      type: object
+      required: [name, description, agent_version]
+      properties:
+        name:
+          type: string
+          maxLength: 128
+        description:
+          type: string
+          maxLength: 1024
+        agent_version:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+            maxLength: 32
+          maxItems: 10
+        homepage:
+          type: string
+          format: uri
+        logo:
+          type: string
+          format: uri
+        operator:
+          $ref: '#/components/schemas/OperatorInfo'
+
+    OperatorInfo:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        url:
+          type: string
+          format: uri
+        contact:
+          type: string
+
+    ManifestCapabilities:
+      type: object
+      required: [interfaces]
+      properties:
+        interfaces:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentInterface'
+          minItems: 1
+        categories:
+          type: array
+          items:
+            type: string
+          maxItems: 5
+        permissions_required:
+          type: array
+          items:
+            type: string
+
+    AgentInterface:
+      type: object
+      required: [protocol, url]
+      properties:
+        protocol:
+          type: string
+          enum: [https, wss]
+        url:
+          type: string
+          format: uri
+        api_standard:
+          type: string
+          enum: [openai-v1-chat, openai-v1-embeddings, anthropic-v1-messages,
+                 mcp-v1, a2a-v1, custom]
+        methods:
+          type: array
+          items:
+            type: string
+        schema_ref:
+          type: string
+          format: uri
+
+    RevocationConfig:
+      type: object
+      required: [endpoint]
+      properties:
+        endpoint:
+          type: string
+          format: uri
+        check_interval:
+          type: integer
+          minimum: 60
+          default: 3600
+
+    ManifestProof:
+      type: object
+      required: [type, created, verification_method, proof_purpose, proof_value]
+      properties:
+        type:
+          type: string
+          enum: [Ed25519Signature2020]
+        created:
+          type: string
+          format: date-time
+        verification_method:
+          type: string
+        proof_purpose:
+          type: string
+          enum: [assertionMethod]
+        proof_value:
+          type: string
+          pattern: '^z[1-9A-HJ-NP-Za-km-z]+$'
+
+    ErrorResponse:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: Machine-readable error code
+            message:
+              type: string
+              description: Human-readable error message
+            details:
+              type: object
+              additionalProperties: true
+
+  securitySchemes:
+    AgentBearerToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >
+        JWT obtained via the /auth/verify endpoint.
+        Include as: Authorization: Bearer <token>
