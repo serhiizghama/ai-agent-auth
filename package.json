@@ -14,7 +14,9 @@
     "test:watch": "vitest --watch",
     "test:coverage": "vitest run --coverage",
     "lint": "eslint . && prettier --check .",
-    "lint:fix": "eslint . --fix && prettier --write ."
+    "lint:fix": "eslint . --fix && prettier --write .",
+    "docs": "typedoc",
+    "docs:serve": "typedoc --watch"
   },
   "devDependencies": {
     "@types/node": "^20.11.0",
@@ -25,6 +27,7 @@
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.2.4",
     "tsup": "^8.0.1",
+    "typedoc": "^0.28.16",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0"
   },

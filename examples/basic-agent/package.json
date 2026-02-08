@@ -1,0 +1,14 @@
+{
+  "name": "basic-agent-example",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Basic AI agent authentication example",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@ai-agent-auth/client": "workspace:*"
+  }
+}

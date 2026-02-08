@@ -1,0 +1,24 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": [
+    "packages/client/src/index.ts",
+    "packages/server/src/index.ts"
+  ],
+  "entryPointStrategy": "resolve",
+  "tsconfig": "tsconfig.base.json",
+  "exclude": ["**/*.test.ts", "**/test/**"],
+  "out": "docs/api",
+  "plugin": [],
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeInternal": true,
+  "readme": "README.md",
+  "theme": "default",
+  "name": "ai-agent-auth API Documentation",
+  "includeVersion": true,
+  "sort": ["source-order"],
+  "searchInComments": true,
+  "categorizeByGroup": true,
+  "gitRevision": "main",
+  "gitRemote": "origin"
+}

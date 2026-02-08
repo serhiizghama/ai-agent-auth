@@ -103,6 +103,62 @@ export interface ServerConfig {
    * Default: 3. Range: 0–5.
    */
   didWebResolveMaxRedirects?: number;
+
+  /**
+   * Optional rate limiter for authentication endpoints.
+   * If not provided, no rate limiting is applied.
+   */
+  rateLimiter?: RateLimiter;
+
+  /**
+   * Optional revocation checker for manifest validation.
+   * If not provided, revocation checking is skipped.
+   */
+  revocationChecker?: RevocationChecker;
+}
+
+/**
+ * Revocation status result.
+ */
+export interface RevocationStatus {
+  revoked: boolean;
+  reason?: string;
+  checked_at: Date;
+}
+
+/**
+ * Revocation checker interface.
+ */
+export interface RevocationChecker {
+  check(manifest: AgentManifest): Promise<RevocationStatus>;
+  dispose?(): void;
+}
+
+/**
+ * Rate limiter interface for authentication endpoints.
+ */
+export interface RateLimiter {
+  /**
+   * Check if a request should be allowed based on rate limits.
+   *
+   * @param key - Identifier for the rate limit (e.g., IP, DID)
+   * @param endpoint - Endpoint name for different limits per endpoint
+   * @returns true if request is allowed, false if rate limited
+   */
+  check(key: string, endpoint: string): Promise<boolean>;
+
+  /**
+   * Record a request for rate limiting purposes.
+   *
+   * @param key - Identifier for the rate limit
+   * @param endpoint - Endpoint name
+   */
+  record(key: string, endpoint: string): Promise<void>;
+
+  /**
+   * Clean up resources (optional).
+   */
+  dispose?(): void;
 }
 
 /**

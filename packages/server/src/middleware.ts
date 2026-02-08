@@ -64,7 +64,8 @@ export function agentAuthMiddleware(config: ServerConfig): {
    */
   router.post(`${pathPrefix}/challenge`, async (req, res) => {
     try {
-      const response = await handler.handleChallenge(req.body);
+      const clientKey = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+      const response = await handler.handleChallenge(req.body, clientKey);
       res.status(200).json(response);
     } catch (error) {
       handleErrorResponse(error, res);
@@ -78,7 +79,8 @@ export function agentAuthMiddleware(config: ServerConfig): {
    */
   router.post(`${pathPrefix}/verify`, async (req, res) => {
     try {
-      const response = await handler.handleVerify(req.body);
+      const clientKey = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+      const response = await handler.handleVerify(req.body, clientKey);
       res.status(200).json(response);
     } catch (error) {
       handleErrorResponse(error, res);
@@ -92,7 +94,8 @@ export function agentAuthMiddleware(config: ServerConfig): {
    */
   router.post(`${pathPrefix}/register`, async (req, res) => {
     try {
-      const response = await handler.handleRegister(req.body);
+      const clientKey = req.ip ?? req.socket.remoteAddress ?? 'unknown';
+      const response = await handler.handleRegister(req.body, clientKey);
       res.status(201).json(response);
     } catch (error) {
       handleErrorResponse(error, res);
@@ -205,6 +208,7 @@ function getStatusCodeForError(code: AuthErrorCode): number {
     case AuthErrorCode.AUTH_DID_NOT_FOUND:
     case AuthErrorCode.AUTH_DID_REJECTED:
     case AuthErrorCode.AUTH_DID_BANNED:
+    case AuthErrorCode.AUTH_MANIFEST_REVOKED:
       return 403;
 
     // 429 Too Many Requests

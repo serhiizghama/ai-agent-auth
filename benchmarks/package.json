@@ -1,0 +1,16 @@
+{
+  "name": "benchmarks",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Performance benchmarks for ai-agent-auth",
+  "scripts": {
+    "bench": "node manifest-signing.js && node challenge-flow.js",
+    "bench:manifest": "node manifest-signing.js",
+    "bench:challenge": "node challenge-flow.js"
+  },
+  "dependencies": {
+    "@ai-agent-auth/client": "workspace:*",
+    "@ai-agent-auth/core": "workspace:*"
+  }
+}

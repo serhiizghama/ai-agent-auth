@@ -1,0 +1,15 @@
+{
+  "name": "express-server-example",
+  "version": "1.0.0",
+  "type": "module",
+  "private": true,
+  "description": "Express server with AI agent authentication",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@ai-agent-auth/server": "workspace:*",
+    "express": "^4.18.2"
+  }
+}

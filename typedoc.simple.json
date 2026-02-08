@@ -1,0 +1,23 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "name": "ai-agent-auth API",
+  "entryPointStrategy": "resolve",
+  "entryPoints": [
+    "./packages/client/src/index.ts",
+    "./packages/server/src/index.ts"
+  ],
+  "tsconfig": "./tsconfig.base.json",
+  "out": "./docs/api",
+  "readme": "./README.md",
+  "excludePrivate": true,
+  "excludeProtected": false,
+  "excludeInternal": true,
+  "includeVersion": true,
+  "exclude": [
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/test/**",
+    "**/benchmarks/**",
+    "**/examples/**"
+  ]
+}

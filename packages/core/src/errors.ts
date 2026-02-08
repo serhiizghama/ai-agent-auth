@@ -19,6 +19,7 @@ export enum AuthErrorCode {
   AUTH_DID_MISMATCH = 'AUTH_DID_MISMATCH',
   AUTH_MANIFEST_EXPIRED = 'AUTH_MANIFEST_EXPIRED',
   AUTH_MANIFEST_ROLLBACK = 'AUTH_MANIFEST_ROLLBACK',
+  AUTH_MANIFEST_REVOKED = 'AUTH_MANIFEST_REVOKED',
   AUTH_UNSUPPORTED_DID_METHOD = 'AUTH_UNSUPPORTED_DID_METHOD',
   AUTH_DID_RESOLUTION_FAILED = 'AUTH_DID_RESOLUTION_FAILED',
 
@@ -53,6 +54,7 @@ export const ERROR_STATUS_MAP: Record<AuthErrorCode, number> = {
   [AuthErrorCode.AUTH_DID_MISMATCH]: 400,
   [AuthErrorCode.AUTH_MANIFEST_EXPIRED]: 400,
   [AuthErrorCode.AUTH_MANIFEST_ROLLBACK]: 400,
+  [AuthErrorCode.AUTH_MANIFEST_REVOKED]: 403,
   [AuthErrorCode.AUTH_UNSUPPORTED_DID_METHOD]: 400,
   [AuthErrorCode.AUTH_DID_RESOLUTION_FAILED]: 400,
   [AuthErrorCode.AUTH_DID_NOT_FOUND]: 403,
@@ -84,6 +86,7 @@ export const ERROR_MESSAGES: Record<AuthErrorCode, string> = {
   [AuthErrorCode.AUTH_MANIFEST_EXPIRED]: 'Manifest has expired.',
   [AuthErrorCode.AUTH_MANIFEST_ROLLBACK]:
     'Manifest sequence is lower than previously seen.',
+  [AuthErrorCode.AUTH_MANIFEST_REVOKED]: 'Manifest has been revoked.',
   [AuthErrorCode.AUTH_UNSUPPORTED_DID_METHOD]:
     'DID method is not supported. Only did:key and did:web are allowed.',
   [AuthErrorCode.AUTH_DID_RESOLUTION_FAILED]:
